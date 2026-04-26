@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../lib/api";
+import { resolveImageUrl } from "../../lib/images";
 
 // Helper to get subtitle based on gender
 const getGenderSubtitle = (gender) => {
@@ -118,7 +119,7 @@ export default function CollectionTiles() {
             name: c.name,
             subtitle: getGenderSubtitle(c.gender),
             link: c.link || toParentCategoryLink(c.gender),
-            image: c.image_url,
+            image: resolveImageUrl(c.image_url),
           }));
           setCollections(tiles);
         } else {

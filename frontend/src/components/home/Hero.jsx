@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import api from "../../lib/api";
+import { resolveImageUrl } from "../../lib/images";
 
 // Fallback slides in case API is empty
 const fallbackSlides = [
@@ -261,7 +262,7 @@ export default function Hero() {
         label: b.title || "Shop Now", 
         to: b.link_url || "/search" 
       },
-      image: b.image_url,
+      image: resolveImageUrl(b.image_url),
       link_url: b.link_url,
       bg: b.bg || "from-rose-400 via-red-500 to-red-600",
     }));

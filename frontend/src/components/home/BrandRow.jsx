@@ -1,13 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../lib/api";
+import { resolveImageUrl } from "../../lib/images";
 
 function BrandLogo({ name, logo_url }) {
   return (
     <div className="h-14 w-28 flex items-center justify-center transition-transform duration-300 hover:-translate-y-0.5">
       {logo_url ? (
         <img
-          src={logo_url}
+          src={resolveImageUrl(logo_url)}
           alt={name}
           className="h-10 w-auto object-contain transition-transform duration-300 hover:scale-105"
           loading="lazy"

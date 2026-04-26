@@ -10,7 +10,10 @@ export function initTelegramWebApp() {
   try {
     tg.ready();
     tg.expand();
-    tg.setHeaderColor("secondary_bg_color");
+    const version = Number.parseFloat(tg.version || "0");
+    if (Number.isFinite(version) && version >= 6.9) {
+      tg.setHeaderColor("secondary_bg_color");
+    }
   } catch {
     // Prevent Telegram-specific runtime errors from breaking the app.
   }

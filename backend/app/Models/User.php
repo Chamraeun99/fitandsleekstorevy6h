@@ -136,7 +136,7 @@ class User extends Authenticatable
         if ($this->profile_image_path) {
             $normalizedPath = ltrim($this->profile_image_path, '/');
             if (Storage::disk('public')->exists($normalizedPath)) {
-                return asset('storage/' . $normalizedPath);
+                return '/storage/' . $normalizedPath;
             }
         }
         return null;

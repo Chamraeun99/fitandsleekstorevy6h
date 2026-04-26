@@ -14,6 +14,34 @@ const api = axios.create({
   withCredentials: true, // Allow cookies for CSRF
 });
 
+const localAssetPattern =
+  /^http:\/\/(localhost|127\.0\.0\.1|host\.docker\.internal|backend|10\.\d+\.\d+\.\d+|192\.168\.\d+\.\d+|172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+)(:\d+)?(\/.*)?$/i;
+
+const rewriteLocalhostUrls = (value) => {
+  if (typeof window === "undefined" || !window.location?.origin) return value;
+
+  if (typeof value === "string") {
+    const match = value.match(localAssetPattern);
+    if (!match) return value;
+    const path = match[3] || "";
+    return `${window.location.origin}${path}`;
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => rewriteLocalhostUrls(item));
+  }
+
+  if (value && typeof value === "object") {
+    const next = {};
+    Object.entries(value).forEach(([key, item]) => {
+      next[key] = rewriteLocalhostUrls(item);
+    });
+    return next;
+  }
+
+  return value;
+};
+
 // Get CSRF token from meta tag
 const getCsrfToken = () => {
   const meta = document.querySelector('meta[name="csrf-token"]');
@@ -54,7 +82,10 @@ api.interceptors.request.use((config) => {
 
 // Response interceptor to handle 401 errors
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    response.data = rewriteLocalhostUrls(response.data);
+    return response;
+  },
   async (error) => {
     const originalRequest = error.config;
 

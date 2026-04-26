@@ -51,8 +51,11 @@ function Icon({ name }) {
 
 function ProfileMenu({ user, onLogout, t, className = "" }) {
   const [open, setOpen] = useState(false);
+  const [avatarBroken, setAvatarBroken] = useState(false);
   const ref = useRef(null);
-  const avatarSrc = user?.profile_image_url || user?.profile_image_path ? resolveImageUrl(user.profile_image_url || user.profile_image_path) : null;
+  const avatarSrc = user?.profile_image_url || user?.profile_image_path
+    ? resolveImageUrl(user.profile_image_url || user.profile_image_path)
+    : null;
   const initials = getInitials(user?.name || user?.email || "");
 
   useEffect(() => {
@@ -66,6 +69,10 @@ function ProfileMenu({ user, onLogout, t, className = "" }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
+  useEffect(() => {
+    setAvatarBroken(false);
+  }, [avatarSrc]);
+
   if (!user) return null;
 
   return (
@@ -76,8 +83,13 @@ function ProfileMenu({ user, onLogout, t, className = "" }) {
         aria-label={t("account")}
       >
         <span className="w-9 h-9 rounded-full bg-zinc-900/10 text-zinc-900 flex items-center justify-center overflow-hidden">
-          {avatarSrc ? (
-            <img src={avatarSrc} alt={user?.name || "Profile"} className="w-full h-full object-cover" />
+          {avatarSrc && !avatarBroken ? (
+            <img
+              src={avatarSrc}
+              alt={user?.name || "Profile"}
+              className="w-full h-full object-cover"
+              onError={() => setAvatarBroken(true)}
+            />
           ) : (
             <span className="text-xs font-bold">{initials || "U"}</span>
           )}
@@ -88,8 +100,13 @@ function ProfileMenu({ user, onLogout, t, className = "" }) {
         <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-xl border border-slate-200 overflow-hidden z-50">
           <div className="px-4 py-4 border-b border-slate-100 flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-zinc-900/10 text-zinc-900 flex items-center justify-center overflow-hidden">
-              {avatarSrc ? (
-                <img src={avatarSrc} alt={user?.name || "Profile"} className="w-full h-full object-cover" />
+              {avatarSrc && !avatarBroken ? (
+                <img
+                  src={avatarSrc}
+                  alt={user?.name || "Profile"}
+                  className="w-full h-full object-cover"
+                  onError={() => setAvatarBroken(true)}
+                />
               ) : (
                 <span className="text-sm font-bold">{initials || "U"}</span>
               )}

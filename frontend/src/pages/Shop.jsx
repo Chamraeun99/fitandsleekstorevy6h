@@ -6,6 +6,7 @@ import { useWishlist } from "../state/wishlist.jsx";
 import { useCart } from "../state/cart.jsx";
 import { Camera, Image as ImageIcon, Sparkles } from "lucide-react";
 import { useLanguage } from "../lib/i18n.jsx";
+import { resolveImageUrl } from "../lib/images";
 
 function useQuery() {
   const { search } = useLocation();
@@ -277,7 +278,7 @@ export default function Shop() {
         <div className="mt-4 p-4 bg-purple-50 rounded-2xl flex items-center gap-4">
           <div className="w-16 h-16 rounded-xl overflow-hidden bg-white">
             <img
-              src={imageSearchResults.image}
+              src={resolveImageUrl(imageSearchResults.image)}
               alt={t('searchImageAlt')}
               className="w-full h-full object-cover"
             />
@@ -336,7 +337,7 @@ export default function Shop() {
                         >
                           <div className="aspect-square rounded-xl overflow-hidden bg-zinc-100 mb-2">
                             <img
-                              src={p.image_url || p.image}
+                              src={resolveImageUrl(p.image_url || p.image)}
                               alt={p.name}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                             />
