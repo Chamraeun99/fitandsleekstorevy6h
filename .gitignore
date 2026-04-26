@@ -1,0 +1,30 @@
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+laravel-container.log
+
+# Environment and secrets
+.env
+.env.*
+*.pem
+*.key
+*.crt
+*.p12
+*credentials*.json
+*service-account*.json
+fitandsleekpro-*.json
+
+# Build and dependency directories
+**/node_modules/
+**/vendor/
+**/dist/
+**/build/
+**/.next/
+**/__pycache__/
+**/.pytest_cache/
+**/.venv/
+
+# IDE files
+.idea/
