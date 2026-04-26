@@ -6,6 +6,7 @@ import { useWishlist } from "../../state/wishlist";
 import { useCart } from "../../state/cart";
 import { useAuth } from "../../state/auth";
 import { errorAlert } from "../../lib/swal";
+import { triggerTelegramHaptic } from "../../lib/telegramWebApp";
 
 function Money({ value }) {
   const n = Number(value || 0);
@@ -31,6 +32,7 @@ export default function ProductCard({ p }) {
           ? p.colors.split(",").map((c) => c.trim()).filter(Boolean)
           : [];
       if (sizes.length > 0) {
+        triggerTelegramHaptic("notification", "warning");
         await errorAlert({
           khTitle: "សូមជ្រើសទំហំ",
           enTitle: "Select size",
@@ -41,6 +43,7 @@ export default function ProductCard({ p }) {
         return;
       }
       if (colors.length > 0) {
+        triggerTelegramHaptic("notification", "warning");
         await errorAlert({
           khTitle: "សូមជ្រើសពណ៌",
           enTitle: "Select color",
@@ -51,7 +54,9 @@ export default function ProductCard({ p }) {
         return;
       }
       await cart.add(p, 1);
+      triggerTelegramHaptic("impact", "medium");
     } catch (e) {
+      triggerTelegramHaptic("notification", "error");
       if (String(e?.message || "").includes("LOGIN_REQUIRED")) {
         window.location.href = "/login";
         return;
@@ -81,16 +86,17 @@ export default function ProductCard({ p }) {
   const originalPrice = hasDiscount ? p.price : p.old_price;
 
   return (
-    <div className="fs-card group overflow-hidden !rounded-none border border-gray-200 bg-white">
+    <div className="fs-card group overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.995]">
       <div className="relative bg-zinc-50 overflow-hidden">
         <Link to={`/p/${p.slug}`} className="block aspect-[4/5] overflow-hidden">
           <img
             src={src}
             alt={p.name}
             onError={() => setImgOk(false)}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition duration-300 group-hover:scale-[1.03]"
           />
         </Link>
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-transparent opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
 
         <button
           onClick={() => wishlist.toggle(p.id)}
@@ -155,6 +161,14 @@ export default function ProductCard({ p }) {
         {!user ? (
           <div className="mt-2 text-[11px] text-zinc-500">Login required for cart & checkout</div>
         ) : null}
+
+        <button
+          type="button"
+          onClick={addToCart}
+          className="mt-3 w-full rounded-xl bg-amber-500 px-3 py-2 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-amber-600 active:translate-y-[1px]"
+        >
+          Add to Cart
+        </button>
       </div>
     </div>
   );

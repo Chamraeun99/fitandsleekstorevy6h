@@ -15,6 +15,11 @@ export default defineConfig({
     port: 5173,
     host: "localhost",
     strictPort: true,
+    allowedHosts: [
+      "gluten-judge-remedial.ngrok-free.dev",
+      ".ngrok-free.dev",
+      ".ngrok-free.app",
+    ],
     hmr: {
       host: "localhost",
       port: 5173,
@@ -27,6 +32,11 @@ export default defineConfig({
         secure: false,
       },
       "/sanctum": {
+        target: proxyTarget,
+        changeOrigin: true,
+        secure: false,
+      },
+      "/storage": {
         target: proxyTarget,
         changeOrigin: true,
         secure: false,

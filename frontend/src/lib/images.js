@@ -1,4 +1,6 @@
-const backendOrigin = import.meta.env.VITE_BACKEND_ORIGIN || "http://127.0.0.1:8000";
+import { resolveBackendOrigin } from "./backendOrigin";
+
+const backendOrigin = resolveBackendOrigin();
 
 // Normalize any lingering hardcoded dev ports so assets always resolve locally.
 const normalizePort = (url) => {
@@ -15,6 +17,16 @@ export function resolveImageUrl(imageUrl) {
 
   // Handle base64 data URIs (e.g., data:image/jpeg;base64,...)
   if (/^data:/i.test(sanitizedUrl)) return sanitizedUrl;
+
+  // Rewrite localhost URLs so images also work on other devices.
+  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//i.test(sanitizedUrl)) {
+    try {
+      const parsed = new URL(sanitizedUrl);
+      return `${backendOrigin}${parsed.pathname}`;
+    } catch {
+      return sanitizedUrl;
+    }
+  }
 
   // Handle external URLs
   if (/^https?:\/\//i.test(sanitizedUrl)) return sanitizedUrl;
