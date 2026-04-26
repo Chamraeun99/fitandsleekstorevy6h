@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import api from "../../lib/api";
+import { resolveImageUrl } from "../../lib/images";
 
 const fallbackSlides = [
   {
@@ -48,9 +49,9 @@ export default function PromoBannerSlider() {
         title: b.title || "Promotion",
         subtitle: b.subtitle || b.description || "",
         link_url: b.link_url || "/search",
-        image_url: imageUrl,
-        video_url: videoUrl,
-        fallback_image: fallbackImage,
+        image_url: resolveImageUrl(imageUrl),
+        video_url: videoUrl ? resolveImageUrl(videoUrl) : "",
+        fallback_image: resolveImageUrl(fallbackImage),
       };
     });
   }, [banners]);

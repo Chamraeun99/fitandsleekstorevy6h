@@ -10,6 +10,27 @@ const normalizePort = (url) => {
     .replace(/127\.0\.0\.1:8001/g, "127.0.0.1:8000");
 };
 
+const hasFileExtension = (value) =>
+  /\.(png|jpe?g|webp|gif|avif|svg|mp4|webm|ogg)$/i.test(String(value || ""));
+
+const shouldRewritePrivateHost = (urlString) => {
+  try {
+    const parsed = new URL(urlString);
+    const host = (parsed.hostname || "").toLowerCase();
+    return (
+      host === "localhost" ||
+      host === "127.0.0.1" ||
+      host === "host.docker.internal" ||
+      host === "backend" ||
+      /^10\./.test(host) ||
+      /^192\.168\./.test(host) ||
+      /^172\.(1[6-9]|2\d|3[0-1])\./.test(host)
+    );
+  } catch {
+    return false;
+  }
+};
+
 export function resolveImageUrl(imageUrl) {
   if (!imageUrl) return "/placeholder.svg";
 
@@ -19,7 +40,7 @@ export function resolveImageUrl(imageUrl) {
   if (/^data:/i.test(sanitizedUrl)) return sanitizedUrl;
 
   // Rewrite localhost URLs so images also work on other devices.
-  if (/^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?\//i.test(sanitizedUrl)) {
+  if (shouldRewritePrivateHost(sanitizedUrl)) {
     try {
       const parsed = new URL(sanitizedUrl);
       return `${backendOrigin}${parsed.pathname}`;
@@ -30,6 +51,11 @@ export function resolveImageUrl(imageUrl) {
 
   // Handle external URLs
   if (/^https?:\/\//i.test(sanitizedUrl)) return sanitizedUrl;
+
+  // Handle filename-only values from API (e.g. "abc123.png").
+  if (!sanitizedUrl.includes("/") && hasFileExtension(sanitizedUrl)) {
+    return `${backendOrigin}/storage/banners/${sanitizedUrl}`;
+  }
 
   // common patterns: /storage/.., storage/.., public/storage/..
   const cleaned = sanitizedUrl.startsWith("/") ? sanitizedUrl : `/${sanitizedUrl}`;
