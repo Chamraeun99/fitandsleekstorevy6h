@@ -23,6 +23,15 @@ const getCsrfToken = () => {
 // Attach Bearer token to requests
 api.interceptors.request.use((config) => {
   config.baseURL = resolveApiBaseUrl();
+  const isNgrokBase = typeof config.baseURL === "string" && config.baseURL.includes("ngrok-free.");
+  const isNgrokHost =
+    typeof window !== "undefined" &&
+    typeof window.location?.host === "string" &&
+    window.location.host.includes("ngrok-free.");
+
+  if (isNgrokBase || isNgrokHost) {
+    config.headers["ngrok-skip-browser-warning"] = "true";
+  }
 
   const token = localStorage.getItem(TOKEN_KEY);
   if (token) {

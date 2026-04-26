@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import api from "../lib/api";
 import ProductCard from "../components/shop/ProductCard.jsx";
 import { useWishlist } from "../state/wishlist.jsx";
+import { useCart } from "../state/cart.jsx";
 import { Camera, Image as ImageIcon, Sparkles } from "lucide-react";
 import { useLanguage } from "../lib/i18n.jsx";
 
@@ -15,6 +16,7 @@ export default function Shop() {
   const qs = useQuery();
   const nav = useNavigate();
   const wishlist = useWishlist();
+  const cart = useCart();
   const { t } = useLanguage();
 
   const [categories, setCategories] = useState([]);
@@ -172,7 +174,7 @@ export default function Shop() {
   };
 
   return (
-    <div className="container-safe py-8">
+    <div className={`container-safe py-8 ${cart.count > 0 ? "pb-28 sm:pb-32" : ""}`}>
       <div className="flex flex-col md:flex-row md:items-end gap-4 justify-between">
         <div>
           <h1 className="text-2xl font-black tracking-tight">
@@ -300,14 +302,14 @@ export default function Shop() {
 
       <div className="mt-6 max-w-[1600px] mx-auto">
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-4 xl:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
             {Array.from({ length: 8 }).map((_, idx) => (
               <div key={idx} className="fs-card overflow-hidden">
-                <div className="aspect-square bg-zinc-100 animate-pulse" />
+                <div className="aspect-square fs-skeleton-block" />
                 <div className="p-3">
-                  <div className="h-3 w-2/3 bg-zinc-100 animate-pulse rounded" />
-                  <div className="mt-2 h-3 w-1/3 bg-zinc-100 animate-pulse rounded" />
-                  <div className="mt-3 h-7 w-20 bg-zinc-100 animate-pulse rounded-full" />
+                  <div className="h-3 w-2/3 fs-skeleton-block rounded" />
+                  <div className="mt-2 h-3 w-1/3 fs-skeleton-block rounded" />
+                  <div className="mt-3 h-7 w-20 fs-skeleton-block rounded-full" />
                 </div>
               </div>
             ))}
@@ -354,7 +356,7 @@ export default function Shop() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-4 gap-2 sm:gap-3 md:gap-4 lg:gap-4 xl:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 md:gap-4">
             {products.map((p) => (
               <ProductCard key={p.id} p={p} />
             ))}
@@ -381,6 +383,24 @@ export default function Shop() {
             className="h-10 sm:h-12 px-4 sm:px-6 rounded-full border border-zinc-200 disabled:opacity-40 text-sm sm:text-base font-medium"
           >
             {t('next')}
+          </button>
+        </div>
+      )}
+
+      {cart.count > 0 && (
+        <div className="fixed bottom-3 left-3 right-3 z-50 sm:left-auto sm:right-6 sm:w-[360px]">
+          <button
+            type="button"
+            onClick={() => nav("/cart")}
+            className="w-full rounded-2xl bg-amber-500 px-5 py-3 text-white shadow-[0_10px_24px_rgba(245,158,11,0.35)] transition hover:bg-amber-600"
+          >
+            <div className="flex items-center justify-between text-sm font-semibold">
+              <span>{cart.count} item{cart.count > 1 ? "s" : ""}</span>
+              <span>View Cart</span>
+            </div>
+            <div className="mt-0.5 text-left text-xs opacity-95">
+              Total: ${Number(cart.total || 0).toFixed(2)}
+            </div>
           </button>
         </div>
       )}

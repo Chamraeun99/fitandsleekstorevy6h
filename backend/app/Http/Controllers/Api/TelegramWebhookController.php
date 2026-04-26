@@ -129,10 +129,20 @@ class TelegramWebhookController extends Controller
         }
 
         if ($telegramUser && !empty($telegramUser->getAttribute('user_id'))) {
+            $miniAppUrl = $this->resolveMiniAppUrl();
+            $productButton = ['text' => '🛒 View Products'];
+
+            if ($miniAppUrl) {
+                $productButton = [
+                    'text' => '🛍️ Open Store',
+                    'web_app' => ['url' => $miniAppUrl],
+                ];
+            }
+
             return [
                 'keyboard' => [
                     [
-                        ['text' => '🛒 View Products'],
+                        $productButton,
                         ['text' => '📦 My Orders'],
                     ],
                 ],
@@ -272,6 +282,7 @@ class TelegramWebhookController extends Controller
         }
 
         $baseUrl = rtrim((string) (config('app.frontend_url') ?: env('FRONTEND_URL', config('app.url'))), '/');
+        $miniAppUrl = $this->resolveMiniAppUrl();
 
         $lines = ["🛍️ Top Picks from Fit & Sleek:"];
         foreach ($products as $index => $product) {
@@ -283,10 +294,33 @@ class TelegramWebhookController extends Controller
             $lines[] = "   🔗 {$url}";
         }
 
+        if ($miniAppUrl) {
+            $lines[] = "";
+            $lines[] = "Tap the button below to open the store inside Telegram.";
+        } else {
+            $lines[] = "";
+            $lines[] = "Mini App is not configured yet. Set FRONTEND_URL to your HTTPS public domain.";
+        }
+
+        $replyMarkup = null;
+        if ($miniAppUrl) {
+            $replyMarkup = [
+                'inline_keyboard' => [
+                    [
+                        [
+                            'text' => '🛍️ Open Fit & Sleek Store',
+                            'web_app' => ['url' => $miniAppUrl],
+                        ],
+                    ],
+                ],
+            ];
+        }
+
         $this->sendTelegramApi($token, 'sendMessage', [
             'chat_id' => $chatId,
             'text' => implode("\n", $lines),
             'disable_web_page_preview' => false,
+            'reply_markup' => $replyMarkup,
         ]);
     }
 
@@ -356,5 +390,28 @@ class TelegramWebhookController extends Controller
         return Http::asJson()
             ->timeout(10)
             ->post("https://api.telegram.org/bot{$token}/{$method}", $payload);
+    }
+
+    private function resolveMiniAppUrl(): ?string
+    {
+        $url = trim((string) (config('app.frontend_url') ?: env('FRONTEND_URL', '')));
+        if ($url === '') {
+            return null;
+        }
+
+        if (!str_starts_with($url, 'https://')) {
+            return null;
+        }
+
+        $host = parse_url($url, PHP_URL_HOST);
+        if (!is_string($host) || $host === '') {
+            return null;
+        }
+
+        if ($host === 'localhost' || str_ends_with($host, '.localhost') || $host === '127.0.0.1') {
+            return null;
+        }
+
+        return rtrim($url, '/');
     }
 }

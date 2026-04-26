@@ -6,6 +6,7 @@ export default {
   	extend: {
 			fontFamily: {
 				sans: ["Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "Helvetica", "Arial", "sans-serif"],
+        khmer: ["Kantumruy Pro", "Noto Sans Khmer", "Battambang", "sans-serif"],
 			},
 			
   		boxShadow: {
@@ -64,6 +65,8 @@ export default {
 					card: "#FFFFFF",
 					hoverWarm: "#FFF5EE",
 				},
+        "brand-primary": "#f39c12",
+        "brand-bg": "#f8f9fa",
   		}
   	}
   },
