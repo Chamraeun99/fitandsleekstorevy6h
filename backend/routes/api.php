@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AuthSessionController;
 use App\Http\Controllers\Api\SocialAuthController;
 use App\Http\Controllers\Api\BakongPaymentController;
+use App\Http\Controllers\Api\TelegramWebhookController;
 
 // Storefront
 use App\Http\Controllers\Api\Storefront\CategoryController;
@@ -49,6 +50,7 @@ use App\Http\Controllers\Api\Admin\PaymentSettingsController;
 use App\Http\Controllers\Api\Admin\ShipmentAdminController;
 use App\Http\Controllers\Api\Admin\ReplacementCaseAdminController;
 use App\Http\Controllers\Api\Admin\SuperAdminController;
+use App\Http\Controllers\Api\Admin\TelegramUserAdminController;
 use App\Http\Controllers\Api\Driver\ShipmentDriverController;
 
 // Admin - Search & Notifications
@@ -85,6 +87,7 @@ Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback'
 Route::get('/auth/social/exchange/{ticket}', [SocialAuthController::class, 'exchange']);
 Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword'])->middleware('throttle:5,1');
 Route::post('/auth/reset-password', [AuthController::class, 'resetPassword'])->middleware('throttle:10,1');
+Route::post('/telegram/webhook', [TelegramWebhookController::class, 'handle']);
 
 // -------------------------
 // PUBLIC STOREFRONT
@@ -245,6 +248,18 @@ Route::middleware(['auth:sanctum', 'device.bound', 'admin'])->prefix('admin')->g
     Route::get('customers/{customer}', [CustomerAdminController::class, 'show']);
     Route::patch('customers/{customer}', [CustomerAdminController::class, 'update']);
     Route::delete('customers/{customer}', [CustomerAdminController::class, 'destroy']);
+
+    // Telegram Users
+    Route::get('/telegram-users', [TelegramUserAdminController::class, 'index']);
+    Route::post('/telegram-users/broadcast', [TelegramUserAdminController::class, 'broadcast']);
+    Route::get('/telegram-users/broadcasts', [TelegramUserAdminController::class, 'broadcasts']);
+    Route::patch('/telegram-users/broadcasts/{broadcastId}/cancel', [TelegramUserAdminController::class, 'cancel']);
+    Route::patch('/telegram-users/broadcasts/{broadcastId}/pause', [TelegramUserAdminController::class, 'pause']);
+    Route::patch('/telegram-users/broadcasts/{broadcastId}/resume', [TelegramUserAdminController::class, 'resume']);
+    Route::post('/telegram-users/broadcasts/{broadcastId}/retry-failed', [TelegramUserAdminController::class, 'retryFailed']);
+    Route::get('/telegram-users/broadcasts/{broadcastId}/progress', [TelegramUserAdminController::class, 'progress']);
+    Route::get('/telegram-users/broadcasts/{broadcastId}/stats', [TelegramUserAdminController::class, 'stats']);
+    Route::get('/telegram-users/maintenance-stats', [TelegramUserAdminController::class, 'maintenanceStats']);
 
     // Reports
     Route::get('/reports/dashboard', [ReportController::class, 'dashboard']);
