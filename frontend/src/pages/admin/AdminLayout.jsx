@@ -52,6 +52,7 @@ export default function AdminLayout() {
           { path: "/admin/sales", icon: "M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z", label: "Sales" },
           { path: "/admin/categories", icon: "M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z", label: "Categories" },
           { path: "/admin/brands", icon: "M7 4h10M7 8h10M7 12h10M7 16h10M7 20h10", label: "Brands" },
+          { path: "/admin/barcode-qr", icon: "M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.243m-6.243 0H6m6 0V9m0 3v3", label: "Barcode & QR" },
         ],
       },
       {
@@ -137,6 +138,9 @@ export default function AdminLayout() {
     await logout();
     navigate("/login");
   };
+
+  /** Full-screen POS uses its own bottom actions; the tab bar would cover them (z-40 vs z-30). */
+  const hideMobileBottomNav = location.pathname.startsWith("/admin/pos");
 
   return (
     <div className="admin-theme admin-root admin-gemini-shell min-h-screen overflow-x-hidden text-slate-800 dark:text-slate-100 font-sans flex admin-soft">
@@ -293,7 +297,7 @@ export default function AdminLayout() {
 
       <main className={`${sidebarOpen ? "md:ml-[280px]" : "md:ml-24"} ml-0 flex-1 min-w-0 transition-all duration-300 admin-soft min-h-screen flex flex-col relative z-[1]`}>
         {/* Mobile header with overflow menu */}
-        <div className="md:hidden sticky top-0 z-40 flex items-center gap-3 admin-surface backdrop-blur px-4 py-3 border-b admin-border">
+        <div className="sticky top-0 z-40 flex shrink-0 items-center gap-3 border-b admin-border admin-surface px-4 py-3 backdrop-blur md:hidden">
           <Logo className="h-10 w-auto flex-shrink-0" src={logoSrc} alt="Fit&Sleek" />
           <div className="flex-1">
             <div className="relative">
@@ -318,26 +322,31 @@ export default function AdminLayout() {
         </div>
 
         <AdminTopbar sidebarOpen={sidebarOpen} />
-        <div className="p-4 md:p-8 md:pt-28 pb-24 md:pb-8 admin-soft text-[15px] leading-relaxed md:text-base">
+        <div
+          className={`flex min-h-0 flex-1 flex-col p-4 text-[15px] leading-relaxed admin-soft md:p-8 md:pt-28 md:text-base ${
+            hideMobileBottomNav
+              ? "pb-[max(1rem,env(safe-area-inset-bottom,0px))] md:pb-8"
+              : "pb-[calc(8rem+env(safe-area-inset-bottom,0px))] md:pb-8"
+          }`}
+        >
           <Outlet />
         </div>
       </main>
 
-      {/* Mobile bottom navigation (flat style) */}
+      {/* Mobile bottom navigation: 4 tabs + center scan (barcode / QR) */}
       <nav
-        className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t admin-border admin-surface backdrop-blur-xl shadow-[0_8px_24px_rgba(15,23,42,0.18)]"
+        className={`md:hidden fixed bottom-0 left-0 right-0 z-40 border-t admin-border admin-surface backdrop-blur-xl shadow-[0_8px_24px_rgba(15,23,42,0.18)] pb-[env(safe-area-inset-bottom,0px)] ${
+          hideMobileBottomNav ? "hidden" : ""
+        }`}
       >
-        <div
-          className="grid gap-2 px-3 py-3"
-          style={{ gridTemplateColumns: `repeat(${bottomNavItems.length || 1}, minmax(0, 1fr))` }}
-        >
-          {bottomNavItems.map((item) => (
+        <div className="grid grid-cols-5 gap-1 px-2 py-2.5">
+          {bottomNavItems.slice(0, 2).map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
               end={item.path === "/admin"}
               className={({ isActive }) =>
-                `relative flex flex-col items-center gap-1 py-2 text-[11px] font-semibold transition-colors duration-200 ${
+                `relative flex flex-col items-center gap-0.5 py-1 text-[10px] font-semibold transition-colors duration-200 ${
                   isActive
                     ? "text-[var(--admin-primary)] dark:text-white"
                     : "text-slate-700 dark:text-white/90 hover:text-slate-900 dark:hover:text-white"
@@ -345,17 +354,66 @@ export default function AdminLayout() {
               }
             >
               <span
-                className={`flex h-10 w-10 items-center justify-center rounded-full shadow-sm ring-1 ring-black/5 dark:ring-white/8 backdrop-blur-sm ${
+                className={`flex h-9 w-9 items-center justify-center rounded-full shadow-sm ring-1 ring-black/5 dark:ring-white/8 backdrop-blur-sm ${
                   location.pathname.startsWith(item.path)
                     ? "bg-[rgba(var(--admin-primary-rgb),0.14)] text-[var(--admin-primary)] dark:bg-white/12 dark:text-white"
                     : "bg-white/80 dark:bg-slate-800/80 dark:text-white"
                 }`}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
                 </svg>
               </span>
-              <span className="truncate">{item.label}</span>
+              <span className="truncate max-w-full">{item.label}</span>
+            </NavLink>
+          ))}
+
+          <div className="flex flex-col items-center justify-end gap-0.5 pb-0.5">
+            <button
+              type="button"
+              onClick={() => navigate("/admin/pos")}
+              className={`flex h-12 w-12 -mt-5 items-center justify-center rounded-full shadow-lg ring-2 ring-white dark:ring-slate-900 transition-transform active:scale-95 ${
+                location.pathname.startsWith("/admin/pos")
+                  ? "bg-teal-600 text-white ring-teal-300/80"
+                  : "bg-teal-500 text-white hover:bg-teal-600"
+              }`}
+              aria-label="Scan barcode or QR code"
+              title="Scan barcode or QR"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7V5a2 2 0 012-2h2M17 3h2a2 2 0 012 2v2M21 17v2a2 2 0 01-2 2h-2M7 21H5a2 2 0 01-2-2v-2" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h10v10H7z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6" />
+              </svg>
+            </button>
+            <span className="text-[10px] font-semibold text-slate-600 dark:text-slate-300 truncate">Scan</span>
+          </div>
+
+          {bottomNavItems.slice(2).map((item) => (
+            <NavLink
+              key={item.path}
+              to={item.path}
+              end={item.path === "/admin"}
+              className={({ isActive }) =>
+                `relative flex flex-col items-center gap-0.5 py-1 text-[10px] font-semibold transition-colors duration-200 ${
+                  isActive
+                    ? "text-[var(--admin-primary)] dark:text-white"
+                    : "text-slate-700 dark:text-white/90 hover:text-slate-900 dark:hover:text-white"
+                }`
+              }
+            >
+              <span
+                className={`flex h-9 w-9 items-center justify-center rounded-full shadow-sm ring-1 ring-black/5 dark:ring-white/8 backdrop-blur-sm ${
+                  location.pathname.startsWith(item.path)
+                    ? "bg-[rgba(var(--admin-primary-rgb),0.14)] text-[var(--admin-primary)] dark:bg-white/12 dark:text-white"
+                    : "bg-white/80 dark:bg-slate-800/80 dark:text-white"
+                }`}
+              >
+                <svg className="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                </svg>
+              </span>
+              <span className="truncate max-w-full">{item.label}</span>
             </NavLink>
           ))}
         </div>

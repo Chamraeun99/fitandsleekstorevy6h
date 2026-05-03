@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Models\Message;
+use App\Services\PaidOrderInventory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
 
 class ProductAdminController extends Controller
 {
@@ -36,6 +38,12 @@ class ProductAdminController extends Controller
             'category_id' => ['required', 'integer'],
             'brand_id' => ['nullable', 'integer', 'exists:brands,id'],
             'sku' => ['required', 'string', 'max:60'],
+            'barcode_code' => [
+                'nullable',
+                'string',
+                'max:120',
+                Rule::exists('categories', 'slug')->where(fn ($q) => $q->where('type', PaidOrderInventory::BARCODE_CATEGORY_TYPE)),
+            ],
             'name' => ['required', 'string', 'max:180'],
             'description' => ['nullable', 'string'],
             'price' => ['required', 'numeric', 'min:0'],
@@ -51,6 +59,11 @@ class ProductAdminController extends Controller
             'payment_methods' => ['nullable', 'array'],
             'gallery' => ['nullable', 'array'],
         ]);
+
+        if (array_key_exists('barcode_code', $data)) {
+            $bc = trim((string) $data['barcode_code']);
+            $data['barcode_code'] = $bc === '' ? null : $bc;
+        }
 
         $data['slug'] = Str::slug($data['name']);
         // Ensure unique slug
@@ -103,6 +116,12 @@ class ProductAdminController extends Controller
             'category_id' => ['sometimes', 'integer'],
             'brand_id' => ['nullable', 'integer', 'exists:brands,id'],
             'sku' => ['sometimes', 'string', 'max:60'],
+            'barcode_code' => [
+                'nullable',
+                'string',
+                'max:120',
+                Rule::exists('categories', 'slug')->where(fn ($q) => $q->where('type', PaidOrderInventory::BARCODE_CATEGORY_TYPE)),
+            ],
             'name' => ['sometimes', 'string', 'max:180'],
             'description' => ['nullable', 'string'],
             'price' => ['sometimes', 'numeric', 'min:0'],
@@ -118,6 +137,11 @@ class ProductAdminController extends Controller
             'payment_methods' => ['nullable', 'array'],
             'gallery' => ['nullable', 'array'],
         ]);
+
+        if (array_key_exists('barcode_code', $data)) {
+            $bc = trim((string) $data['barcode_code']);
+            $data['barcode_code'] = $bc === '' ? null : $bc;
+        }
 
         if (isset($data['name'])) $data['slug'] = Str::slug($data['name']);
         // Ensure unique slug on update

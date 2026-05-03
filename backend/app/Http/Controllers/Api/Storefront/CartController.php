@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Product;
+use App\Services\PaidOrderInventory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -65,7 +66,7 @@ class CartController extends Controller
         $color = $data['color'] ?? null;
 
         if (is_numeric($product->stock)) {
-            $stock = (int) $product->stock;
+            $stock = PaidOrderInventory::effectiveProductStockCap($product);
             $existingTotal = CartItem::where('cart_id', $cartId)
                 ->where('product_id', $product->id)
                 ->sum('quantity');
@@ -121,7 +122,7 @@ class CartController extends Controller
         $product = Product::find($item->product_id);
         $newQty = (int) $data['quantity'];
         if ($product && is_numeric($product->stock)) {
-            $stock = (int) $product->stock;
+            $stock = PaidOrderInventory::effectiveProductStockCap($product);
             $otherQty = CartItem::where('cart_id', $cartId)
                 ->where('product_id', $item->product_id)
                 ->where('id', '!=', $item->id)

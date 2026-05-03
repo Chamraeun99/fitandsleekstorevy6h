@@ -34,6 +34,8 @@ use App\Http\Controllers\Api\Admin\ChatbotSettingsController;
 // Admin
 use App\Http\Controllers\Api\Admin\HomepageAdminController;
 use App\Http\Controllers\Api\Admin\HomepageSettingsController;
+use App\Http\Controllers\Api\Admin\BarcodeScanController;
+use App\Http\Controllers\Api\Admin\PosSaleController;
 use App\Http\Controllers\Api\Admin\CategoryAdminController;
 use App\Http\Controllers\Api\Admin\ProductAdminController;
 use App\Http\Controllers\Api\Admin\OrderAdminController;
@@ -220,6 +222,14 @@ Route::middleware(['auth:sanctum', 'device.bound', 'admin'])->prefix('admin')->g
 
     // Product gallery image upload
     Route::post('/products/gallery-upload', [ProductAdminController::class, 'uploadGalleryImage']);
+
+    // Barcode scan → lookup (no stock change) + sale (deduct stock)
+    Route::get('/barcode-scan/lookup', [BarcodeScanController::class, 'lookup']);
+    Route::post('/barcode-scan/sale', [BarcodeScanController::class, 'sale']);
+
+    // POS: complete sale (stock + paid order) or save unpaid draft
+    Route::post('/pos/complete-sale', [PosSaleController::class, 'completeSale']);
+    Route::post('/pos/draft-order', [PosSaleController::class, 'saveDraft']);
 
     // CRUD
     Route::apiResource('categories', CategoryAdminController::class);

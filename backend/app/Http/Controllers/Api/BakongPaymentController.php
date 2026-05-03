@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Services\PaidOrderInventory;
 use App\Models\Cart;
 use App\Models\Order;
 use App\Models\Payment;
@@ -198,14 +199,7 @@ class BakongPaymentController extends Controller
 
         $order->loadMissing('items.product');
 
-        foreach ($order->items as $item) {
-            $product = $item->product;
-            if ($product && $product->stock !== null) {
-                $product->update([
-                    'stock' => max(0, (int) $product->stock - (int) ($item->qty ?? 0)),
-                ]);
-            }
-        }
+        PaidOrderInventory::applyForOrder($order);
     }
 
     private function formatPaymentResponse(Payment $payment): array

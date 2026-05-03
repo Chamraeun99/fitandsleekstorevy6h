@@ -29,6 +29,13 @@ services:
     ports:
       - "9000:8000"
 
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    restart: always
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+
 volumes:
   qdrant_storage:
   ai_model_cache:

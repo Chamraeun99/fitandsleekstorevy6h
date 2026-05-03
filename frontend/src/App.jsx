@@ -29,6 +29,8 @@ import AdminLayout from "./pages/admin/AdminLayout.jsx";
 import AdminProducts from "./pages/admin/Products.jsx";
 import AdminCategories from "./pages/admin/Categories.jsx";
 import AdminBrands from "./pages/admin/Brands.jsx";
+import AdminBarcodeQR from "./pages/admin/BarcodeQR.jsx";
+import AdminPosScan from "./pages/admin/AdminPosScan.jsx";
 import AdminOrders from "./pages/admin/Orders.jsx";
 import AdminInvoicePage from "./pages/admin/Invoice.jsx";
 import AdminCustomers from "./pages/admin/Customers.jsx";
@@ -210,6 +212,10 @@ export default function App() {
           <Route path="sales" element={<AdminSales />} />
           <Route path="categories" element={<AdminCategories />} />
           <Route path="brands" element={<AdminBrands />} />
+          <Route path="barcode-qr/new" element={<AdminBarcodeQR />} />
+          <Route path="barcode-qr/:id/edit" element={<AdminBarcodeQR />} />
+          <Route path="barcode-qr" element={<AdminBarcodeQR />} />
+          <Route path="pos" element={<AdminPosScan />} />
           <Route path="homepage" element={<HomePageManager />} />
           <Route path="homepage-complete" element={<CompleteHomepageManager />} />
           <Route path="orders" element={<AdminOrders />} />

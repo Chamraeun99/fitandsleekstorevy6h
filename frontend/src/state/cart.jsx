@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useMemo, useState } from "react";
 import api from "../lib/api";
 import { useAuth } from "./auth";
+import { triggerTelegramHaptic } from "../lib/telegramWebApp";
 
 const CartCtx = createContext(null);
 const LOCAL_CART_KEY = "fs_guest_cart";
@@ -120,6 +121,7 @@ export function CartProvider({ children }) {
       const local = writeLocalCart(next);
       setCart({ items: local.items });
       setTotal(local.total);
+      triggerTelegramHaptic("impact", "medium");
       return { cart: { items: local.items }, total: local.total };
     }
 
@@ -129,9 +131,11 @@ export function CartProvider({ children }) {
       const { data } = await api.post("/cart/items", { product_id: productId, quantity, size: size || null, color: color || null });
       setCart(data.cart);
       setTotal(data.total);
+      triggerTelegramHaptic("impact", "medium");
       return data;
     } catch (err) {
       console.error("Add to cart error:", err);
+      triggerTelegramHaptic("notification", "error");
       if (err.response?.status === 401 || err.response?.status === 403) {
         throw new Error("LOGIN_REQUIRED");
       }
