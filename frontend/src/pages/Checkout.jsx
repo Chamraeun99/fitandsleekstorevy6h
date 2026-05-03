@@ -8,6 +8,7 @@ import { useLanguage } from "../lib/i18n.jsx";
 import CheckoutPaymentKhqr from "../components/payments/CheckoutPaymentKhqr";
 import CheckoutPaymentCard from "../components/payments/CheckoutPaymentCard";
 import KhqrSuccessModal from "../components/alerts/KhqrSuccessModal";
+import { setupTelegramBackButton, setupTelegramMainButton, triggerTelegramHaptic } from "../lib/telegramWebApp";
 
 const KHQR_REDIRECT_SECONDS = 60;
 
@@ -220,6 +221,37 @@ export default function Checkout() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const safeTotal = Number(cart.total || 0);
+    const buttonText = paymentMethod === "bakong_khqr"
+      ? (t("payWithKHQR") || "Pay with KHQR")
+      : (t("placeOrder") || "Place Order");
+    const buttonTextWithTotal = `${buttonText} • $${safeTotal.toFixed(2)}`;
+    const canSubmit = !loading && !!paymentMethod;
+
+    const onMainClick = () => {
+      triggerTelegramHaptic("impact", "light");
+      place();
+    };
+    const onBackClick = () => nav("/cart");
+
+    const cleanupMain = setupTelegramMainButton({
+      text: loading ? (t("processing") || "Processing...") : buttonTextWithTotal,
+      onClick: onMainClick,
+      color: paymentMethod === "bakong_khqr" ? "#C88F09" : "#567D74",
+      textColor: "#FFFFFF",
+      isVisible: true,
+      isEnabled: canSubmit,
+      showProgress: loading,
+    });
+    const cleanupBack = setupTelegramBackButton({ onClick: onBackClick, isVisible: true });
+
+    return () => {
+      cleanupMain();
+      cleanupBack();
+    };
+  }, [cart.total, loading, nav, paymentMethod, t, user]);
 
   /* ── helpers ── */
   const getPriceMeta = (item) => {

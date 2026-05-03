@@ -54,9 +54,7 @@ export default function ProductCard({ p }) {
         return;
       }
       await cart.add(p, 1);
-      triggerTelegramHaptic("impact", "medium");
     } catch (e) {
-      triggerTelegramHaptic("notification", "error");
       if (String(e?.message || "").includes("LOGIN_REQUIRED")) {
         window.location.href = "/login";
         return;

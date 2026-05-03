@@ -9,6 +9,7 @@ use App\Models\Payment;
 use App\Models\Setting;
 use App\Services\BakongApi;
 use App\Services\BakongKhqrService;
+use App\Services\PaidOrderInventory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -84,14 +85,7 @@ class PaymentController extends Controller
             ]);
 
             $order->load('items.product');
-            foreach ($order->items as $item) {
-                $product = $item->product;
-                if ($product && $product->stock !== null) {
-                    $product->update([
-                        'stock' => max(0, (int) $product->stock - (int) ($item->qty ?? 0)),
-                    ]);
-                }
-            }
+            PaidOrderInventory::applyForOrder($order);
         });
 
         // Clear cart only after payment succeeds
@@ -166,14 +160,7 @@ class PaymentController extends Controller
             ]);
 
             $order->load('items.product');
-            foreach ($order->items as $item) {
-                $product = $item->product;
-                if ($product && $product->stock !== null) {
-                    $product->update([
-                        'stock' => max(0, (int) $product->stock - (int) ($item->qty ?? 0)),
-                    ]);
-                }
-            }
+            PaidOrderInventory::applyForOrder($order);
         });
 
         // Clear cart only after payment succeeds
@@ -345,14 +332,7 @@ class PaymentController extends Controller
                         ]);
                         $this->clearUserCart((int) $order->user_id);
 
-                        foreach ($order->items as $item) {
-                            $product = $item->product;
-                            if ($product && $product->stock !== null) {
-                                $product->update([
-                                    'stock' => max(0, (int) $product->stock - (int) ($item->qty ?? 0)),
-                                ]);
-                            }
-                        }
+                        PaidOrderInventory::applyForOrder($order);
                     }
                 });
             }
@@ -427,14 +407,7 @@ class PaymentController extends Controller
 
             $this->clearUserCart((int) $order->user_id);
 
-            foreach ($order->items as $item) {
-                $product = $item->product;
-                if ($product && $product->stock !== null) {
-                    $product->update([
-                        'stock' => max(0, (int) $product->stock - (int) ($item->qty ?? 0)),
-                    ]);
-                }
-            }
+            PaidOrderInventory::applyForOrder($order);
         }
 
         return response()->json(['ok' => true]);

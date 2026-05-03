@@ -7,6 +7,7 @@ use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Services\PaidOrderInventory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -96,6 +97,28 @@ class OrderController extends Controller
 
         if (! $cart || $cart->items->isEmpty()) {
             return response()->json(['message' => 'Cart is empty.'], 422);
+        }
+
+        $qtyByProduct = [];
+        foreach ($cart->items as $ci) {
+            $pid = (int) $ci->product_id;
+            $qtyByProduct[$pid] = ($qtyByProduct[$pid] ?? 0) + (int) $ci->quantity;
+        }
+        foreach ($qtyByProduct as $productId => $needQty) {
+            $product = Product::with('activeSale')->find($productId);
+            if (! $product || ! (bool) $product->is_active) {
+                throw ValidationException::withMessages([
+                    'cart' => ['One or more products are unavailable. Please refresh your cart and try again.'],
+                ]);
+            }
+            if (is_numeric($product->stock)) {
+                $cap = PaidOrderInventory::effectiveProductStockCap($product);
+                if ($needQty > $cap) {
+                    throw ValidationException::withMessages([
+                        'cart' => ['Not enough stock for: ' . $product->name . '.'],
+                    ]);
+                }
+            }
         }
 
         $order = DB::transaction(function () use ($userId, $cart, $validated) {

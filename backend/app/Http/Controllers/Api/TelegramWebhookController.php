@@ -55,6 +55,8 @@ class TelegramWebhookController extends Controller
             return response()->json(['ok' => true, 'message' => 'No message payload found.']);
         }
 
+        $this->syncChatMenuButton($token, (int) $chatId);
+
         if ($this->isViewProductsCommand($text)) {
             $this->sendProductList($token, (int) $chatId);
             return response()->json(['ok' => true]);
@@ -413,5 +415,24 @@ class TelegramWebhookController extends Controller
         }
 
         return rtrim($url, '/');
+    }
+
+    private function syncChatMenuButton(string $token, int $chatId): void
+    {
+        $miniAppUrl = $this->resolveMiniAppUrl();
+        if (!$miniAppUrl) {
+            return;
+        }
+
+        $this->sendTelegramApi($token, 'setChatMenuButton', [
+            'chat_id' => $chatId,
+            'menu_button' => [
+                'type' => 'web_app',
+                'text' => '🛍️ Shop Now',
+                'web_app' => [
+                    'url' => $miniAppUrl,
+                ],
+            ],
+        ]);
     }
 }

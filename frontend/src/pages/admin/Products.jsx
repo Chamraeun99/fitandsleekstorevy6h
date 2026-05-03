@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
+import { createPortal } from "react-dom";
 import { Columns2Icon, LayoutGridIcon, ListIcon } from "lucide-react";
 import api from "../../lib/api";
 import { useAuth } from "../../state/auth";
@@ -43,7 +44,7 @@ export default function AdminProducts() {
   const [categories, setCategories] = useState([]);
   const [brands, setBrands] = useState([]);
   const [form, setForm] = useState({
-    name: "", sku: "", description: "", price: "", stock: "", category_id: "", brand_id: "", image_url: "", gender: "", is_active: true,
+    name: "", sku: "", barcode_code: "", description: "", price: "", stock: "", category_id: "", brand_id: "", image_url: "", gender: "", is_active: true,
     model_info: "", colors: "", sizes: [], size_guide: "", delivery_info: "", support_phone: "", payment_methods: "", gallery: ""
   });
   const [editing, setEditing] = useState(null);
@@ -119,6 +120,34 @@ export default function AdminProducts() {
   };
 
   const getSizePreset = (typeKey) => SIZE_PRESETS[typeKey] || [];
+
+  const BARCODE_QR_TYPE = "barcode_qr";
+
+  const catalogCategories = useMemo(
+    () => categories.filter((c) => normalizeType(c.type) !== BARCODE_QR_TYPE),
+    [categories]
+  );
+
+  const barcodeLabelOptions = useMemo(
+    () =>
+      [...categories.filter((c) => normalizeType(c.type) === BARCODE_QR_TYPE)].sort((a, b) =>
+        String(a.name || "").localeCompare(String(b.name || ""), undefined, { sensitivity: "base" })
+      ),
+    [categories]
+  );
+
+  const formBarcodeOrphan = useMemo(() => {
+    const code = (form.barcode_code || "").trim();
+    if (!code) return false;
+    return !barcodeLabelOptions.some((b) => String(b.slug || "") === code);
+  }, [form.barcode_code, barcodeLabelOptions]);
+
+  const editBarcodeOrphan = useMemo(() => {
+    if (!editing) return false;
+    const code = (editing.barcode_code || "").trim();
+    if (!code) return false;
+    return !barcodeLabelOptions.some((b) => String(b.slug || "") === code);
+  }, [editing, barcodeLabelOptions]);
 
   const selectedCategory = categories.find((c) => String(c.id) === String(form.category_id));
   const selectedEditCategory = categories.find((c) => String(c.id) === String(editing?.category_id));
@@ -366,6 +395,7 @@ export default function AdminProducts() {
       const response = await api.post("/admin/products", {
         ...form,
         brand_id: form.brand_id || null,
+        barcode_code: (form.barcode_code || "").trim() || null,
         price: parseFloat(form.price),
         stock: parseInt(form.stock || 0),
         colors: form.colors ? form.colors.split(',').map(c => c.trim()).filter(Boolean) : [],
@@ -377,7 +407,7 @@ export default function AdminProducts() {
         throw new Error("Create failed.");
       }
       closeSwal();
-      setForm({ name: "", sku: "", description: "", price: "", stock: "", category_id: "", brand_id: "", image_url: "", gender: "", is_active: true, model_info: "", colors: "", sizes: [], size_guide: "", delivery_info: "", support_phone: "", payment_methods: "", gallery: "" });
+      setForm({ name: "", sku: "", barcode_code: "", description: "", price: "", stock: "", category_id: "", brand_id: "", image_url: "", gender: "", is_active: true, model_info: "", colors: "", sizes: [], size_guide: "", delivery_info: "", support_phone: "", payment_methods: "", gallery: "" });
       setShowCreateForm(false);
       setCreateSection("basic");
       await toastSuccess({
@@ -404,7 +434,13 @@ export default function AdminProducts() {
     }
   };
 
-  const startEdit = (p) => setEditing({ ...p, sizes: normalizeSizes(p.sizes), gallery: stringifyGallery(p.gallery) });
+  const startEdit = (p) =>
+    setEditing({
+      ...p,
+      barcode_code: p.barcode_code ?? "",
+      sizes: normalizeSizes(p.sizes),
+      gallery: stringifyGallery(p.gallery),
+    });
 
   const saveEdit = async () => {
     setErr("");
@@ -423,6 +459,7 @@ export default function AdminProducts() {
       await api.patch(`/admin/products/${editing.id}`, {
         ...editing,
         brand_id: editing.brand_id || null,
+        barcode_code: (editing.barcode_code || "").trim() || null,
         price: parseFloat(editing.price),
         stock: parseInt(editing.stock || 0),
         colors: editing.colors && typeof editing.colors === 'string' ? editing.colors.split(',').map(c => c.trim()).filter(Boolean) : (editing.colors || []),
@@ -904,9 +941,10 @@ export default function AdminProducts() {
           </div>
         )}
 
-        {/* Create Form Modal */}
-        {showCreateForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        {/* Create Form Modal — portaled so it stacks above AdminLayout main (z-[1]) / topbar / mobile nav */}
+        {showCreateForm &&
+          createPortal(
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div
               className="absolute inset-0 bg-black/50 backdrop-blur-sm"
               onClick={() => !isCreating && setShowCreateForm(false)}
@@ -993,8 +1031,36 @@ export default function AdminProducts() {
                       />
                     </div>
 
-                    {/* Category */}
+                    {/* Barcode bundle — labels from Barcode & QR (categories type barcode_qr) */}
                     <div className="md:col-span-3">
+                      <label className="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">Barcode label</label>
+                      <select
+                        value={(form.barcode_code || "").trim()}
+                        onChange={(e) => setForm((s) => ({ ...s, barcode_code: e.target.value }))}
+                        className="w-full h-12 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm text-slate-900 dark:text-slate-100 outline-none focus:border-slate-500 dark:focus:border-slate-400 focus:bg-white dark:focus:bg-slate-900 transition-all duration-300"
+                      >
+                        <option value="">None (not linked)</option>
+                        {formBarcodeOrphan && (
+                          <option value={(form.barcode_code || "").trim()}>
+                            {(form.barcode_code || "").trim()} (not in list — save or pick another)
+                          </option>
+                        )}
+                        {barcodeLabelOptions.map((c) => (
+                          <option key={c.id} value={c.slug || ""}>
+                            {c.name || c.slug}
+                            {c.slug ? ` · ${c.slug}` : ""}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                        {barcodeLabelOptions.length === 0
+                          ? "Create labels under Admin → Barcode & QR."
+                          : "Optional. If the label tracks stock, paid orders reduce that stock too."}
+                      </p>
+                    </div>
+
+                    {/* Category */}
+                    <div className="md:col-span-2">
                       <label className="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">Category *</label>
                       <select
                         value={form.category_id}
@@ -1003,14 +1069,14 @@ export default function AdminProducts() {
                         className="w-full h-12 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm text-slate-900 dark:text-slate-100 outline-none focus:border-slate-500 dark:focus:border-slate-400 focus:bg-white dark:focus:bg-slate-900 transition-all duration-300"
                       >
                         <option value="">Select category</option>
-                        {categories.map((c) => (
+                        {catalogCategories.map((c) => (
                           <option key={c.id} value={c.id}>{c.name}</option>
                         ))}
                       </select>
                     </div>
 
                     {/* Brand */}
-                    <div className="md:col-span-3">
+                    <div className="md:col-span-2">
                       <label className="block text-xs font-semibold text-slate-600 mb-2 uppercase tracking-wide">Brand</label>
                       <select
                         value={form.brand_id}
@@ -1422,8 +1488,9 @@ export default function AdminProducts() {
                 </div>
               </form>
             </div>
-          </div>
-        )}
+          </div>,
+            document.body
+          )}
 
         {/* Products Grid */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm overflow-hidden border border-slate-200 dark:border-slate-800">
@@ -1769,9 +1836,10 @@ export default function AdminProducts() {
         </div>
       </div>
 
-      {/* Edit Modal */}
-      {editing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Edit Modal — portaled so overlays are clickable above admin chrome */}
+      {editing &&
+        createPortal(
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setEditing(null)}
@@ -1814,6 +1882,33 @@ export default function AdminProducts() {
               </div>
 
               <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-slate-600 mb-2">Barcode label</label>
+                <select
+                  value={(editing.barcode_code || "").trim()}
+                  onChange={(e) => setEditing((s) => ({ ...s, barcode_code: e.target.value }))}
+                  className="w-full h-12 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm text-slate-900 dark:text-slate-100 outline-none focus:border-slate-500 dark:focus:border-slate-400 focus:bg-white dark:focus:bg-slate-900 transition-all duration-300"
+                >
+                  <option value="">None (not linked)</option>
+                  {editBarcodeOrphan && (
+                    <option value={(editing.barcode_code || "").trim()}>
+                      {(editing.barcode_code || "").trim()} (missing from list)
+                    </option>
+                  )}
+                  {barcodeLabelOptions.map((c) => (
+                    <option key={c.id} value={c.slug || ""}>
+                      {c.name || c.slug}
+                      {c.slug ? ` · ${c.slug}` : ""}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                  {barcodeLabelOptions.length === 0
+                    ? "Create labels under Admin → Barcode & QR."
+                    : "When paid, stock is also reduced on that label if it tracks stock."}
+                </p>
+              </div>
+
+              <div className="md:col-span-2">
                 <label className="block text-sm font-semibold text-slate-600 mb-2">Description</label>
                 <textarea
                   value={editing.description || ''}
@@ -1853,7 +1948,7 @@ export default function AdminProducts() {
                   className="w-full h-12 rounded-xl border-2 border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 text-sm text-slate-900 dark:text-slate-100 outline-none focus:border-slate-500 dark:focus:border-slate-400 focus:bg-white dark:focus:bg-slate-900 transition-all duration-300"
                 >
                   <option value="">Select category</option>
-                  {categories.map((c) => (
+                  {catalogCategories.map((c) => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
                 </select>
@@ -2175,7 +2270,8 @@ export default function AdminProducts() {
               </div>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <style>{`

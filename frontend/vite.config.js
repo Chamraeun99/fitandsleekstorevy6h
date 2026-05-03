@@ -19,6 +19,9 @@ export default defineConfig({
       "gluten-judge-remedial.ngrok-free.dev",
       ".ngrok-free.dev",
       ".ngrok-free.app",
+      ".trycloudflare.com",
+      "fitandsleek.kalapak-team.space",
+      "fitandsleekapp.kalapak-team.space",
     ],
     hmr: {
       host: "localhost",
