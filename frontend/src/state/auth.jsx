@@ -35,7 +35,7 @@ export function AuthProvider({ children }) {
     setToken(currentToken);
 
     try {
-      const { data } = await api.get("/me");
+      const { data } = await api.get("/auth/me");
       setUser(data);
     } catch (err) {
       // If 404 or 401, token might be invalid - clear it
