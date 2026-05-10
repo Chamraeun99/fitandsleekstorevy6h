@@ -193,9 +193,13 @@ export default function App() {
           />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/auth/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/auth/register" element={<Register />} />
           <Route path="/oauth/callback" element={<OAuthCallback />} />
           <Route path="/oauth/callback/:ticket" element={<OAuthCallback />} />
+          <Route path="/auth/:provider/callback" element={<OAuthCallback />} />
+          <Route path="/auth/:provider/callback/:ticket" element={<OAuthCallback />} />
         </Route>
 
         <Route
