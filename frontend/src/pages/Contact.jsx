@@ -18,6 +18,7 @@ export default function ContactPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [turnstileToken, setTurnstileToken] = useState(null);
+  const [turnstileErrorCode, setTurnstileErrorCode] = useState(null);
   const [turnstileMountKey, setTurnstileMountKey] = useState(0);
 
   const turnstileEnabled = useMemo(() => turnstileUiEnabled(), []);
@@ -30,6 +31,10 @@ export default function ContactPage() {
 
     if (turnstileEnabled && !turnstileToken) {
       setLoading(false);
+      if (turnstileErrorCode === "400020") {
+        setError(t("contactTurnstileInvalidSitekey"));
+        return;
+      }
       setError(t("contactTurnstileRequired"));
       return;
     }
@@ -43,6 +48,7 @@ export default function ContactPage() {
       setSuccess(true);
       setForm({ name: "", email: "", phone: "", subject: "", message: "" });
       setTurnstileToken(null);
+      setTurnstileErrorCode(null);
       setTurnstileMountKey((k) => k + 1);
     } catch (e) {
       let msg = e.response?.data?.message || t("contactSendFailed");
@@ -53,6 +59,7 @@ export default function ContactPage() {
       }
       setError(msg);
       setTurnstileToken(null);
+      setTurnstileErrorCode(null);
       setTurnstileMountKey((k) => k + 1);
     } finally {
       setLoading(false);
@@ -187,7 +194,18 @@ export default function ContactPage() {
                 <TurnstileField
                   key={turnstileMountKey}
                   siteKey={TURNSTILE_SITE_KEY}
-                  onToken={setTurnstileToken}
+                  onToken={(token) => {
+                    setTurnstileToken(token);
+                    if (token) {
+                      setTurnstileErrorCode(null);
+                    }
+                  }}
+                  onError={(code) => {
+                    setTurnstileErrorCode(code);
+                    if (code === "400020") {
+                      setError(t("contactTurnstileInvalidSitekey"));
+                    }
+                  }}
                   disabled={loading}
                 />
               </div>

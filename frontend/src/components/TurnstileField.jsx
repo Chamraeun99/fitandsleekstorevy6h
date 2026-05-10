@@ -1,13 +1,15 @@
 import React, { useEffect, useRef, useState } from "react";
 import { ensureTurnstileScript } from "../lib/ensureTurnstile.js";
 
-export default function TurnstileField({ siteKey, onToken, disabled, theme = "auto" }) {
+export default function TurnstileField({ siteKey, onToken, onError, disabled, theme = "auto" }) {
   const containerRef = useRef(null);
   const widgetIdRef = useRef(null);
   const onTokenRef = useRef(onToken);
+  const onErrorRef = useRef(onError);
   const [scriptError, setScriptError] = useState(null);
 
   onTokenRef.current = onToken;
+  onErrorRef.current = onError;
 
   useEffect(() => {
     if (!siteKey || typeof siteKey !== "string" || !siteKey.trim()) {
@@ -24,6 +26,7 @@ export default function TurnstileField({ siteKey, onToken, disabled, theme = "au
         if (!cancelled) {
           setScriptError(String(e?.message || e));
           onTokenRef.current?.(null);
+          onErrorRef.current?.("script_load_failed");
         }
         return;
       }
@@ -35,6 +38,7 @@ export default function TurnstileField({ siteKey, onToken, disabled, theme = "au
       widgetIdRef.current = window.turnstile.render(containerRef.current, {
         sitekey: siteKey.trim(),
         theme,
+        retry: "never",
         callback: (token) => {
           if (!cancelled) {
             onTokenRef.current?.(token);
@@ -50,9 +54,10 @@ export default function TurnstileField({ siteKey, onToken, disabled, theme = "au
             onTokenRef.current?.(null);
           }
         },
-        "error-callback": () => {
+        "error-callback": (code) => {
           if (!cancelled) {
             onTokenRef.current?.(null);
+            onErrorRef.current?.(code != null ? String(code) : "widget_error");
           }
         },
       });

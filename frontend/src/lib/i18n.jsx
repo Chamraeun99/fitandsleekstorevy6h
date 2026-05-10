@@ -225,6 +225,8 @@ const translations = {
     contactTurnstileRequired: 'Please complete the security check before sending.',
     contactTurnstileVerificationFailed:
       'Security verification failed. Refresh the page and try again.',
+    contactTurnstileInvalidSitekey:
+      'Security check configuration error (invalid sitekey or domain mismatch). Please refresh and try again, or contact support.',
     contactVerificationLabel: 'Security verification',
     yourName: 'Your Name',
     emailAddress: 'Email Address',
@@ -757,6 +759,8 @@ const translations = {
     contactTurnstileRequired: 'សូមបំពេញការផ្ទៀងផ្ទាត់សុវត្ថិភាពមុនពេលផ្ញើ។',
     contactTurnstileVerificationFailed:
       'ការផ្ទៀងផ្ទាត់សុវត្ថិភាពបរាជ័យ។ សូមផ្ទុកទំព័រឡើងវិញ ហើយព្យាយាមម្តងទៀត។',
+    contactTurnstileInvalidSitekey:
+      'កំហុសការកំណត់ Security Check (Sitekey មិនត្រឹមត្រូវ ឬ Domain មិនត្រូវគ្នា)។ សូមផ្ទុកទំព័រឡើងវិញ ហើយព្យាយាមម្តងទៀត ឬទាក់ទង Support។',
     contactVerificationLabel: 'ការផ្ទៀងផ្ទាត់សុវត្ថិភាព',
     yourName: 'ឈ្មោះរបស់អ្នក',
     emailAddress: 'អាសយដ្ឋានអ៊ីមែល',

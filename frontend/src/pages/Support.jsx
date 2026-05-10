@@ -20,12 +20,14 @@ export default function SupportPage() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
   const [turnstileToken, setTurnstileToken] = useState(null);
+  const [turnstileErrorCode, setTurnstileErrorCode] = useState(null);
   const [turnstileMountKey, setTurnstileMountKey] = useState(0);
   const turnstileEnabled = useMemo(() => turnstileUiEnabled(), []);
 
   useEffect(() => {
     if (!isFormOpen) return;
     setTurnstileToken(null);
+    setTurnstileErrorCode(null);
     setTurnstileMountKey((k) => k + 1);
   }, [isFormOpen]);
 
@@ -37,6 +39,10 @@ export default function SupportPage() {
 
     if (turnstileEnabled && !turnstileToken) {
       setLoading(false);
+      if (turnstileErrorCode === "400020") {
+        setError(t("contactTurnstileInvalidSitekey"));
+        return;
+      }
       setError(t("contactTurnstileRequired"));
       return;
     }
@@ -50,6 +56,7 @@ export default function SupportPage() {
       setSuccess(true);
       setForm({ name: "", email: "", subject: "", message: "" });
       setTurnstileToken(null);
+      setTurnstileErrorCode(null);
       setTurnstileMountKey((k) => k + 1);
       setTimeout(() => {
         setIsFormOpen(false);
@@ -64,6 +71,7 @@ export default function SupportPage() {
       }
       setError(msg);
       setTurnstileToken(null);
+      setTurnstileErrorCode(null);
       setTurnstileMountKey((k) => k + 1);
     } finally {
       setLoading(false);
@@ -258,7 +266,18 @@ export default function SupportPage() {
                     <TurnstileField
                       key={turnstileMountKey}
                       siteKey={TURNSTILE_SITE_KEY}
-                      onToken={setTurnstileToken}
+                      onToken={(token) => {
+                        setTurnstileToken(token);
+                        if (token) {
+                          setTurnstileErrorCode(null);
+                        }
+                      }}
+                      onError={(code) => {
+                        setTurnstileErrorCode(code);
+                        if (code === "400020") {
+                          setError(t("contactTurnstileInvalidSitekey"));
+                        }
+                      }}
                       disabled={loading}
                     />
                   </div>
