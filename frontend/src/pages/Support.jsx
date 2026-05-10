@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import api from "../lib/api";
 import {
   Dialog,
@@ -9,6 +9,8 @@ import {
   DialogClose,
 } from "../components/ui/Dialog";
 import { useLanguage } from "../lib/i18n.jsx";
+import TurnstileField from "../components/TurnstileField.jsx";
+import { TURNSTILE_SITE_KEY, turnstileUiEnabled } from "../lib/turnstileSiteKey.js";
 
 export default function SupportPage() {
   const { t } = useLanguage();
@@ -17,6 +19,15 @@ export default function SupportPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState(null);
+  const [turnstileMountKey, setTurnstileMountKey] = useState(0);
+  const turnstileEnabled = useMemo(() => turnstileUiEnabled(), []);
+
+  useEffect(() => {
+    if (!isFormOpen) return;
+    setTurnstileToken(null);
+    setTurnstileMountKey((k) => k + 1);
+  }, [isFormOpen]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,16 +35,36 @@ export default function SupportPage() {
     setError("");
     setSuccess(false);
 
+    if (turnstileEnabled && !turnstileToken) {
+      setLoading(false);
+      setError(t("contactTurnstileRequired"));
+      return;
+    }
+
     try {
-      await api.post("/contact", form);
+      const payload = { ...form };
+      if (turnstileEnabled) {
+        payload.cf_turnstile_response = turnstileToken;
+      }
+      await api.post("/contact", payload);
       setSuccess(true);
       setForm({ name: "", email: "", subject: "", message: "" });
+      setTurnstileToken(null);
+      setTurnstileMountKey((k) => k + 1);
       setTimeout(() => {
         setIsFormOpen(false);
         setSuccess(false);
       }, 2000);
     } catch (e) {
-      setError(e.response?.data?.message || t('contactSendFailed'));
+      let msg = e.response?.data?.message || t("contactSendFailed");
+      const status = e.response?.status;
+      const errors = e.response?.data?.errors || {};
+      if (status === 422 && errors.cf_turnstile_response) {
+        msg = t("contactTurnstileVerificationFailed");
+      }
+      setError(msg);
+      setTurnstileToken(null);
+      setTurnstileMountKey((k) => k + 1);
     } finally {
       setLoading(false);
     }
@@ -219,10 +250,24 @@ export default function SupportPage() {
                   />
                 </div>
 
+                {turnstileEnabled && (
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      {t("contactVerificationLabel")}
+                    </label>
+                    <TurnstileField
+                      key={turnstileMountKey}
+                      siteKey={TURNSTILE_SITE_KEY}
+                      onToken={setTurnstileToken}
+                      disabled={loading}
+                    />
+                  </div>
+                )}
+
                 <div className="flex gap-2 pt-4">
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={loading || (turnstileEnabled && !turnstileToken)}
                     className="flex-1 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white font-semibold py-3 rounded-lg text-base transition-all duration-300"
                   >
                     {loading ? t('sending') : t('sendMessage')}

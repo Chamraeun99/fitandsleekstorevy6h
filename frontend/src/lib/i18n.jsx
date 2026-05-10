@@ -222,6 +222,10 @@ const translations = {
     messageSent: 'Message Sent!',
     messageSentDesc: "We'll get back to you within 24 hours.",
     contactSendFailed: 'Failed to send message. Please try again.',
+    contactTurnstileRequired: 'Please complete the security check before sending.',
+    contactTurnstileVerificationFailed:
+      'Security verification failed. Refresh the page and try again.',
+    contactVerificationLabel: 'Security verification',
     yourName: 'Your Name',
     emailAddress: 'Email Address',
     phoneNumber: 'Phone Number',
@@ -750,6 +754,10 @@ const translations = {
     messageSent: 'បានផ្ញើសារ!',
     messageSentDesc: 'យើងនឹងឆ្លើយតបក្នុងរយៈពេល 24 ម៉ោង។',
     contactSendFailed: 'ផ្ញើសារមិនបានសម្រេចទេ។ សូមព្យាយាមម្ដងទៀត។',
+    contactTurnstileRequired: 'សូមបំពេញការផ្ទៀងផ្ទាត់សុវត្ថិភាពមុនពេលផ្ញើ។',
+    contactTurnstileVerificationFailed:
+      'ការផ្ទៀងផ្ទាត់សុវត្ថិភាពបរាជ័យ។ សូមផ្ទុកទំព័រឡើងវិញ ហើយព្យាយាមម្តងទៀត។',
+    contactVerificationLabel: 'ការផ្ទៀងផ្ទាត់សុវត្ថិភាព',
     yourName: 'ឈ្មោះរបស់អ្នក',
     emailAddress: 'អាសយដ្ឋានអ៊ីមែល',
     phoneNumber: 'លេខទូរស័ព្ទ',

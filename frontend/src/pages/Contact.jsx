@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import api from "../lib/api";
 import { X } from "lucide-react";
 import { useLanguage } from "../lib/i18n.jsx";
+import TurnstileField from "../components/TurnstileField.jsx";
+import { TURNSTILE_SITE_KEY, turnstileUiEnabled } from "../lib/turnstileSiteKey.js";
 
 export default function ContactPage() {
   const { t } = useLanguage();
@@ -15,6 +17,10 @@ export default function ContactPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState(null);
+  const [turnstileMountKey, setTurnstileMountKey] = useState(0);
+
+  const turnstileEnabled = useMemo(() => turnstileUiEnabled(), []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,12 +28,32 @@ export default function ContactPage() {
     setError("");
     setSuccess(false);
 
+    if (turnstileEnabled && !turnstileToken) {
+      setLoading(false);
+      setError(t("contactTurnstileRequired"));
+      return;
+    }
+
     try {
-      await api.post("/contact", form);
+      const payload = { ...form };
+      if (turnstileEnabled) {
+        payload.cf_turnstile_response = turnstileToken;
+      }
+      await api.post("/contact", payload);
       setSuccess(true);
       setForm({ name: "", email: "", phone: "", subject: "", message: "" });
+      setTurnstileToken(null);
+      setTurnstileMountKey((k) => k + 1);
     } catch (e) {
-      setError(e.response?.data?.message || t('contactSendFailed'));
+      let msg = e.response?.data?.message || t("contactSendFailed");
+      const status = e.response?.status;
+      const errors = e.response?.data?.errors || {};
+      if (status === 422 && errors.cf_turnstile_response) {
+        msg = t("contactTurnstileVerificationFailed");
+      }
+      setError(msg);
+      setTurnstileToken(null);
+      setTurnstileMountKey((k) => k + 1);
     } finally {
       setLoading(false);
     }
@@ -153,9 +179,23 @@ export default function ContactPage() {
               />
             </div>
 
+            {turnstileEnabled && (
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">
+                  {t("contactVerificationLabel")}
+                </label>
+                <TurnstileField
+                  key={turnstileMountKey}
+                  siteKey={TURNSTILE_SITE_KEY}
+                  onToken={setTurnstileToken}
+                  disabled={loading}
+                />
+              </div>
+            )}
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || (turnstileEnabled && !turnstileToken)}
               className="w-full h-12 sm:h-14 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-bold text-base sm:text-lg hover:from-amber-600 hover:to-orange-600 shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             >
               {loading ? (

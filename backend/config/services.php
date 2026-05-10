@@ -126,4 +126,8 @@ return [
         'timeout' => (int) env('IMAGE_SEARCH_TIMEOUT', 120),
     ],
 
+    'turnstile' => [
+        'secret_key' => env('TURNSTILE_SECRET_KEY'),
+    ],
+
 ];

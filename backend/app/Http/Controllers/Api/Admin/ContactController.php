@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Contact;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 
 class ContactController extends Controller
 {
@@ -97,13 +98,39 @@ class ContactController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $turnstileSecret = config('services.turnstile.secret_key');
+        $needsTurnstile = is_string($turnstileSecret) && $turnstileSecret !== '';
+
+        $rules = [
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255',
             'phone' => 'nullable|string|max:50',
             'subject' => 'required|string|max:255',
             'message' => 'required|string',
-        ]);
+        ];
+
+        if ($needsTurnstile) {
+            $rules['cf_turnstile_response'] = 'required|string';
+        }
+
+        $validated = $request->validate($rules);
+
+        unset($validated['cf_turnstile_response']);
+
+        if ($needsTurnstile) {
+            $verified = Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+                'secret' => $turnstileSecret,
+                'response' => (string) $request->input('cf_turnstile_response'),
+                'remoteip' => $request->ip(),
+            ]);
+
+            if ($verified->json('success') !== true) {
+                return response()->json([
+                    'message' => 'Turnstile verification failed.',
+                    'errors' => ['cf_turnstile_response' => ['Invalid or expired verification.']],
+                ], 422);
+            }
+        }
 
         $contact = Contact::create([
             ...$validated,
