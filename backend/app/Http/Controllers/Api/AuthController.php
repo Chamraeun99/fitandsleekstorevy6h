@@ -170,7 +170,22 @@ class AuthController extends Controller
 
   public function me(Request $request)
   {
-    return response()->json($request->user());
+    $user = $request->user();
+    if (! $user) {
+      return response()->json(['message' => 'Unauthenticated'], 401);
+    }
+
+    return response()->json([
+      'id' => $user->id,
+      'name' => $user->name,
+      'email' => $user->email,
+      'phone' => $user->phone,
+      'role' => $user->role,
+      'status' => $user->status,
+      'email_verified_at' => $user->email_verified_at,
+      'created_at' => $user->created_at,
+      'updated_at' => $user->updated_at,
+    ]);
   }
 
   public function driverToken(Request $request)

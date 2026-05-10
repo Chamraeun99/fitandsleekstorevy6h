@@ -78,6 +78,7 @@ Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/otp/verify', [AuthController::class, 'verifyOtp']);
 Route::post('/auth/otp/resend', [AuthController::class, 'resendOtp']);
+Route::get('/auth/me', [AuthController::class, 'me'])->middleware(['auth:sanctum']);
 Route::post('/auth/logout', [AuthController::class, 'logout'])->middleware(['auth:sanctum', 'device.bound']);
 Route::post('/auth/driver/token', [AuthController::class, 'driverToken'])->middleware(['auth:sanctum', 'device.bound']);
 Route::get('/auth/sessions', [AuthSessionController::class, 'index'])->middleware(['auth:sanctum', 'device.bound']);
